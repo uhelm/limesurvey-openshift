@@ -11,6 +11,7 @@ on:
       - ".github/workflows/nginx-ci.yaml"
 jobs:
   nginx-lint-build:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

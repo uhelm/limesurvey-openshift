@@ -1,0 +1,70 @@
+name: PR Opened
+
+on:
+  pull_request:
+  merge_group:
+
+concurrency:
+  # Cancel in progress for PR open and close, but not merge_group
+  group: ${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-description-add:
+    name: PR Description Add
+    if: github.event_name == 'pull_request'
+    env:
+      DOMAIN: apps.clab.devops.gov.bc.ca
+      PREFIX: ${{ github.event.repository.name }}-${{ github.event.number }}
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    timeout-minutes: 1
+    steps:
+      - uses: bcgov/action-pr-description-add@v1.1.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          add_markdown: |
+            ---
+
+            Thanks for the PR!
+
+            Deployments, as required, will be available below:
+            - [nginx](https://${{ env.PREFIX }}-frontend.${{ env.DOMAIN }})
+
+            Please create PRs in draft mode.  Mark as ready to enable:
+            - [Analysis Workflow](https://github.com/${{ github.repository }}/actions/workflows/analysis.yml)
+
+            After merge, new images are promoted to:
+            - [Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge.yml)
+
+  # Get PR number for merge queues, otherwise jusr use github.event.nuber
+  vars:
+    name: Set Variables
+    outputs:
+      pr: ${{ steps.pr.outputs.pr }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: PR Number
+        id: pr
+        uses: bcgov/action-get-pr@v0.0.1
+
+  # https://github.com/bcgov/action-builder-ghcr
+  builds:
+    name: Builds
+    needs: [vars]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        package: [php, nginx]
+    timeout-minutes: 10
+    steps:
+      - uses: bcgov/action-builder-ghcr@v4.2.1
+        with:
+          #keep_versions: 50
+          package: ${{ matrix.package }}
+          tag: ${{ needs.vars.outputs.pr }}
+          tag_fallback: latest
+          triggers: '${{ matrix.package }}/' #omit to build everything

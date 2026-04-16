@@ -1,4 +1,4 @@
-FROM postgres:17.5
+FROM postgres:18
 
 # Claim ownership for the www-data user
 RUN chown -R www-data:www-data /var/run/postgresql
