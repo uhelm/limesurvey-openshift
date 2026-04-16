@@ -1,0 +1,67 @@
+name: PR Merge - Deploy to Dev
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '.github/**'
+      - '.github/graphics/**'
+      - '!.github/workflows/**'
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR num of image to deploy"
+        required: false
+        type: string
+
+concurrency:
+  # Do not interrupt previous workflows
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  vars:
+    name: Set Variables
+    outputs:
+      pr: ${{ steps.pr.outputs.pr }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      # Get PR number for squash merges to main
+      - name: Get PR Number From Event
+        if: github.event_name == 'push'
+        id: pr_no
+        uses: bcgov/action-get-pr@bfa713a9ab410c0f0c13126c35983934fc80d15b #v0.1.1
+      - name: PR Number
+        id: pr
+        run: echo pr=${{ steps.pr_no.outputs.pr || inputs.pr}} >> $GITHUB_OUTPUT
+
+  deploy-dev:
+    name: Deploy (DEV)
+    uses: ./.github/workflows/helm-cd.yml
+    secrets: inherit
+    needs: [vars]
+    with:
+      environment: dev
+      tag: ${{ needs.vars.outputs.pr }}
+
+  promote-images-dev:
+    name: Promote Images - Dev
+    needs: [deploy-dev, vars]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        package: [php, nginx]
+    timeout-minutes: 2
+    steps:
+      - uses: shrink/actions-docker-registry-tag@v4
+        with:
+          registry: ghcr.io
+          repository: ${{ github.repository }}/limesurvey-${{ matrix.package }}
+          target: ${{ needs.vars.outputs.pr }}
+          tags: dev  #Promote images AFTER successful deploy

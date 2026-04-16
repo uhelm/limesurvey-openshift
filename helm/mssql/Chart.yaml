@@ -1,8 +1,8 @@
 ---
 apiVersion: v2
-name: limesurvey-app
-description: Deploy LimeSurvey
-icon: https://console.apps.clab.devops.gov.bc.ca/static/assets/helm.svg
+name: limesurvey-mssql
+description: Deploy a Microsoft SQL Server instance for LimeSurvey
+icon: https://console.apps.silver.devops.gov.bc.ca/static/assets/mssql.svg
 type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
@@ -14,18 +14,4 @@ version: 0.0.1
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "0.0.1"
-
-dependencies:
-  - name: limesurvey-php
-    version: "~0.0.1"
-    repository: "file://php"
-  - name: limesurvey-nginx
-    version: "~0.0.1"
-    repository: "file://nginx"
-  - name: limesurvey-memcached
-    version: "~0.0.1"
-    repository: "file://memcached"
-  - name: limesurvey-mssql
-    version: "~0.0.1"
-    repository: "file://mssql"
+appVersion: "2022-latest"

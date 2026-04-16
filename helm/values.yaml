@@ -1,42 +1,120 @@
 ---
-labels:
-  version: latest
-  runtime: nginx
-service:
-  type: ClusterIP
-  port: 8080
-ports:
-  name: 8080-tcp
-  containerPort: 8080
-  protocol: TCP
-resources:
-  limits:
-    cpu: 200m
-    memory: 512Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
 global:
+  licensePlate: da8021
+  sectionTag: -dev
+  image:
+    repository: ghcr.io/uhelm/limesurvey-openshift
+    tag: latest
+  host: "limesurvey-dev.apps.clab.devops.gov.bc.ca"
+  vault:
+    enabled: true
+    namespace: platform-services
+    authPath: "auth/k8s-clab"
+    serviceAccount: da8021-vault
+
+limesurvey-nginx:
   volumeMounts:
     mountPath: /var/www/html
     subPath: ""
     name: limesurvey-data
+  image:
+    name: limesurvey-nginx
+  replicaCount: 1
+  labels:
+    version: latest
+    runtime: nginx
+  service:
+    type: ClusterIP
+    port: 8080
+  ports:
+    name: 8080-tcp
+    containerPort: 8080
+    protocol: TCP
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+limesurvey-php:
+  volumeMounts:
+    mountPath: /var/www/html
+    subPath: ""
+    name: limesurvey-data
+  image:
+    name: limesurvey-php
   pvc:
-    php:
-      size: 500Mi
-    postgres:
-      size: 500Mi
-  licensePlate: cd77be
-  sectionTag: -dev
+    size: 1Gi
+  labels:
+    version: latest
+    runtime: php
+  service:
+    type: ClusterIP
+    port: 9000
+  ports:
+    name: 9000-tcp
+    containerPort: 9000
+    protocol: TCP
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+limesurvey-memcached:
   replicaCount: 1
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/
-    imageStreamTag: latest
-  host: "deseng-limesurvey-dev.apps.silver.devops.gov.bc.ca"
+    repository: docker.io/library
+    name: memcached
+    tag: 1.6
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 11211
+  ports:
+    name: 11211-tcp
+    containerPort: 11211
+    protocol: TCP
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
 
-  vault:
+limesurvey-mssql:
+  replicaCount: 1
+  image:
+    repository: mcr.microsoft.com/mssql
+    name: server
+    tag: 2022-latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 1433
+  ports:
+    name: 1433-tcp
+    containerPort: 1433
+    protocol: TCP
+  env:
+    acceptEula: "Y"
+    saPassword: "OverrideYourPassword@123"
+    pid: "Express"
+  resources:
+    limits:
+      cpu: 1
+      memory: 4Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  persistence:
     enabled: true
-    namespace: platform-services
-    authPath: "auth/k8s-silver"
-    serviceAccount: cd77be-vault
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    mountPath: /var/opt/mssql      

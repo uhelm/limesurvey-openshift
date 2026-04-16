@@ -1,0 +1,36 @@
+name: Postgres Image - Lint and Validate
+run-name: Postgres Docker Lint/CI - ${{ github.event.head_commit.message || github.run_number }}
+on:
+  push:
+    paths:
+      - "docker/postgres/**"
+      - ".github/workflows/postgres-ci.yaml"
+  pull_request:
+    paths:
+      - "docker/postgres/**"
+      - ".github/workflows/postgres-ci.yaml"
+jobs:
+  postgres-lint-build:
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Lint Postgres Dockerfile
+        run: |
+          docker buildx bake --print || true
+      - name: Build Postgres Docker image
+        run: |
+          docker buildx build --file docker/postgres/Dockerfile --tag limesurvey-openshift/postgres:ci --load docker/postgres
+      - name: Run Postgres container to validate
+        run: |
+          docker run --name pg-test -e POSTGRES_PASSWORD=test -d limesurvey-openshift/postgres:ci
+          sleep 10
+          docker ps
+          docker exec pg-test pg_isready
+          docker exec pg-test psql -U postgres -c '\l'
+          docker logs pg-test
+          docker stop pg-test
+          docker rm pg-test

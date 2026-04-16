@@ -1,0 +1,29 @@
+name: Helm - Validate and Render Templates
+run-name: Helm Validation/CI - ${{ github.event.head_commit.message || github.run_number }}
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "helm/**"
+      - ".github/workflows/helm-ci.yaml"
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6
+      - name: Update & Build Helm dependencies
+        run: |
+          helm dependency build helm
+          helm dependency update helm
+      - name: Validate Helm Chart
+        run: |
+          helm lint helm --values helm/values.yaml --values helm/values-dev.yaml ./helm
+          helm lint helm --values helm/values.yaml --values helm/values-test.yaml ./helm
+          helm lint helm --values helm/values.yaml --values helm/values-prod.yaml ./helm
+          mkdir ~/rendered-templates
+          helm template --debug helm --values helm/values.yaml --values helm/values-dev.yaml --output-dir ~/rendered-templates/dev ./helm
+          helm template --debug helm --values helm/values.yaml --values helm/values-test.yaml --output-dir ~/rendered-templates/test ./helm
+          helm template --debug helm --values helm/values.yaml --values helm/values-prod.yaml --output-dir ~/rendered-templates/prod ./helm
