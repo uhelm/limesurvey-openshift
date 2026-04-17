@@ -1,8 +1,8 @@
 ---
 apiVersion: v2
-name: limesurvey-nginx
-description: Deploy an NGiNX proxy for LimeSurvey
-icon: https://console.apps.silver.devops.gov.bc.ca/static/assets/helm.svg
+name: limesurvey
+description: Deploy LimeSurvey
+icon: https://console.apps.clab.devops.gov.bc.ca/static/assets/helm.svg
 type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
@@ -20,6 +20,6 @@ dependencies:
   - name: limesurvey-php
     version: "~0.0.1"
     repository: "file://charts/php"
-  - name: limesurvey-postgresql
+  - name: limesurvey-frontend
     version: "~0.0.1"
-    repository: "file://charts/postgres"
+    repository: "file://charts/frontend"

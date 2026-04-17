@@ -1,4 +1,4 @@
-name: Helm - Deploy Chart to OpenShift
+name: Helm - Deploy app to OpenShift
 run-name: Helm Deployment to ${{ github.event.inputs.environment || 'dev' }} - ${{ github.event.head_commit.message || github.run_number }}
 on:
   push:
@@ -16,6 +16,7 @@ on:
         options:
           - dev
           - test
+          - uat
           - prod
 
 jobs:
@@ -43,13 +44,10 @@ jobs:
           done
       - name: Set OpenShift project
         env:
-          OPENSHIFT_PROJECT_LICENSE_PLATE: cd77be
+          OPENSHIFT_PROJECT_LICENSE_PLATE: da8021
         run: |
           oc project $OPENSHIFT_PROJECT_LICENSE_PLATE-${{ github.event.inputs.environment || 'dev' }}
-      - name: Add Helm repository
-        run: |
-          helm repo add bitnami https://charts.bitnami.com/bitnami
-          helm repo update
+
       - name: Update & Build Helm dependencies
         run: |
           helm dependency update ./helm
@@ -61,6 +59,5 @@ jobs:
             --values ./helm/values-${{ github.event.inputs.environment || 'dev' }}.yaml
       - name: Verify Deployment
         run: |
-          oc rollout status statefulset/limesurvey-postgresql --timeout=180s
           oc rollout status deployment/limesurvey-nginx --timeout=180s
           oc rollout status deployment/limesurvey-php --timeout=180s
