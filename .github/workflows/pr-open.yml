@@ -65,6 +65,6 @@ jobs:
         with:
           #keep_versions: 50
           package: ${{ matrix.package }}
-          tag: ${{ needs.vars.outputs.pr }}
+          tags: ${{ needs.vars.outputs.pr }}
           tag_fallback: latest
           triggers: '${{ matrix.package }}/' #omit to build everything
