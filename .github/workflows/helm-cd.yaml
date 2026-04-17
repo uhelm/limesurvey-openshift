@@ -38,7 +38,7 @@ jobs:
         run: |
           for i in {1..5}; do
             # Server sometimes doen't respond immediately, retry a few times
-            oc login --server=$OPENSHIFT_SERVER --token=$OPENSHIFT_SA_TOKEN --insecure-skip-tls-verify=true && break
+            oc login --server=$OPENSHIFT_SERVER --token=$OPENSHIFT_SA_TOKEN && break
             echo "Login failed, retrying in 5 seconds... ($i/5)"
             sleep 5
           done
@@ -50,13 +50,13 @@ jobs:
 
       - name: Update & Build Helm dependencies
         run: |
-          helm dependency update ./helm
-          helm dependency build ./helm
+          helm dependency update ./helm/app
+          helm dependency build ./helm/app
       - name: Deploy Helm chart
         run: |
-          helm upgrade --install limesurvey ./helm \
-            --values ./helm/values.yaml \
-            --values ./helm/values-${{ github.event.inputs.environment || 'dev' }}.yaml
+          helm upgrade --install limesurvey ./helm/app \
+            --values ./helm/app/values.yaml \
+            --values ./helm/app/values-${{ github.event.inputs.environment || 'dev' }}.yaml
       - name: Verify Deployment
         run: |
           oc rollout status deployment/limesurvey-nginx --timeout=180s
