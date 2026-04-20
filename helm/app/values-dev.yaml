@@ -3,7 +3,10 @@ global:
   licensePlate: da8021
   sectionTag: -dev
   host: "limesurvey-dev.apps.clab.devops.gov.bc.ca"
+  image:
+    repository: ghcr.io/uhelm/limesurvey-openshift
+    tag: latest
 
   vault:
-    engine: cd77be-nonprod
+    engine: da8021-nonprod
     path: "/dev"

@@ -35,7 +35,7 @@ jobs:
             Please create PRs in draft mode.  Mark as ready to enable:
             - [Analysis Workflow](https://github.com/${{ github.repository }}/actions/workflows/analysis.yml)
 
-            After merge, new images are promoted to:
+            After merge, new images are promoted to DEV:
             - [Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge.yml)
 
   # Get PR number for merge queues, otherwise jusr use github.event.nuber
@@ -63,8 +63,6 @@ jobs:
     steps:
       - uses: bcgov/action-builder-ghcr@v4.2.1
         with:
-          #keep_versions: 50
-#          build_context: docker/${{ matrix.package }}
           package: ${{ matrix.package }}
           tags: ${{ needs.vars.outputs.pr }}
           tag_fallback: latest

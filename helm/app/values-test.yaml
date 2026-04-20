@@ -3,6 +3,9 @@ global:
   licensePlate: da8021
   sectionTag: -test
   host: "limesurvey-test.apps.clab.devops.gov.bc.ca"
+  image:
+    repository: ghcr.io/uhelm/limesurvey-openshift
+    tag: test
 
   vault:
     engine: da8021-nonprod

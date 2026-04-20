@@ -2,43 +2,63 @@
 global:
   licensePlate: da8021
   sectionTag: -dev
-  replicaCount: 1
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/
-    imageStreamTag: latest
-  host: "limesurvey-dev.apps.silver.devops.gov.bc.ca"
+    repository: ghcr.io/uhelm/limesurvey-openshift
+    tag: latest
+  host: "limesurvey-dev.apps.clab.devops.gov.bc.ca"
   vault:
     enabled: true
     namespace: platform-services
     authPath: "auth/da8021-clab"
     serviceAccount: da8021-vault
 
-labels:
-  version: latest
-  runtime: nginx
-service:
-  type: ClusterIP
-  port: 8080
-ports:
-  name: 8080-tcp
-  containerPort: 8080
-  protocol: TCP
-resources:
-  limits:
-    cpu: 200m
-    memory: 512Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+limesurvey-nginx:
+  replicaCount: 1
+  labels:
+    version: latest
+    runtime: nginx
+  service:
+    type: ClusterIP
+    port: 8080
+  ports:
+    name: 8080-tcp
+    containerPort: 8080
+    protocol: TCP
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
-php:
+limesurvey-php:
   volumeMounts:
     mountPath: /var/www/html
     subPath: ""
     name: limesurvey-data
   pvc:
     size: 500Mi
+  labels:
+    version: latest
+    runtime: php
+  service:
+    type: ClusterIP
+    port: 9000
+  ports:
+    name: 9000-tcp
+    containerPort: 9000
+    protocol: TCP
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
 postgres:
   pvc:
     size: 500Mi
+
+

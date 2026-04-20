@@ -18,12 +18,44 @@ on:
           - test
           - uat
           - prod
+      tag:
+        description: Specify a tag to deploy; defaults to PR number
+        required: false
+        type: string
+        
 
 jobs:
+  
   helm-deploy:
     environment: ${{ github.event.inputs.environment || 'dev' }}
     runs-on: ubuntu-latest
     steps:
+       # Variables
+      - if: inputs.tag  == ''
+        id: pr
+        uses: bcgov/action-get-pr@bfa713a9ab410c0f0c13126c35983934fc80d15b # v0.1.1
+      - id: vars
+        run: |
+          # Vars: tag and release
+
+          # Tag defaults to PR number, but can be overridden by inputs.tag
+          tag=${{ inputs.tag || steps.pr.outputs.pr }}
+
+          # Release name includes run numbers to ensure uniqueness
+          release=${{ github.event.repository.name }}-${{ inputs.environment || steps.pr.outputs.pr || inputs.tag }}
+
+          # version, to support helm packaging for non-pr based releases (workflow_dispatch). default to 1.0.0+github run number
+          version=1.0.0+${{ github.run_number }}
+
+            # Summary
+          echo "tag=${tag}"
+          echo "release=${release}"
+          echo "version=${version}"
+
+          # Output
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "release=${release}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up OpenShift CLI
@@ -44,7 +76,7 @@ jobs:
           done
       - name: Set OpenShift project
         env:
-          OPENSHIFT_PROJECT_LICENSE_PLATE: da8021
+          OPENSHIFT_PROJECT_LICENSE_PLATE: ${{ secrets.OPENSHIFT_SERVER }}
         run: |
           oc project $OPENSHIFT_PROJECT_LICENSE_PLATE-${{ github.event.inputs.environment || 'dev' }}
 
@@ -56,7 +88,8 @@ jobs:
         run: |
           helm upgrade --install limesurvey ./helm/app \
             --values ./helm/app/values.yaml \
-            --values ./helm/app/values-${{ github.event.inputs.environment || 'dev' }}.yaml
+            --values ./helm/app/values-${{ github.event.inputs.environment || 'dev' }}.yaml \
+            --set-string global.tag="${{ steps.vars.outputs.tag }}" \
       - name: Verify Deployment
         run: |
           oc rollout status deployment/limesurvey-nginx --timeout=180s

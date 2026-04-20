@@ -20,18 +20,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Update & Build Helm dependencies
-        run: |
-          helm repo add bitnami https://charts.bitnami.com/bitnami
-          helm repo update
-          helm dependency build helm
-          helm dependency update helm
+      #- name: Update & Build Helm dependencies
+      #  run: |
+      #    helm repo add bitnami https://charts.bitnami.com/bitnami
+      #    helm repo update
+      #    helm dependency build helm
+      #    helm dependency update helm
       - name: Validate Helm Chart
         run: |
-          helm lint helm --values helm/values.yaml --values helm/values-dev.yaml
-          helm lint helm --values helm/values.yaml --values helm/values-test.yaml
-          helm lint helm --values helm/values.yaml --values helm/values-prod.yaml
+          helm lint helm --values helm/app/values.yaml --values helm/app/values-dev.yaml
+          helm lint helm --values helm/app/values.yaml --values helm/app/values-test.yaml
+          helm lint helm --values helm/app/values.yaml --values helm/app/values-prod.yaml
           mkdir ~/rendered-templates
-          helm template --debug helm --values helm/values.yaml --values helm/values-dev.yaml --output-dir ~/rendered-templates/dev
-          helm template --debug helm --values helm/values.yaml --values helm/values-test.yaml --output-dir ~/rendered-templates/test
-          helm template --debug helm --values helm/values.yaml --values helm/values-prod.yaml --output-dir ~/rendered-templates/prod
+          helm template --debug helm --values helm/app/values.yaml --values helm/app/values-dev.yaml --output-dir ~/rendered-templates/dev
+          helm template --debug helm --values helm/app/values.yaml --values helm/app/values-test.yaml --output-dir ~/rendered-templates/test
+          helm template --debug helm --values helm/app/values.yaml --values helm/app/values-prod.yaml --output-dir ~/rendered-templates/prod
