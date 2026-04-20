@@ -1,0 +1,32 @@
+name: PR Merged
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '.github/**'
+      - '.github/graphics/**'
+      - '!.github/workflows/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag set to deploy; e.g. PR number or prod"
+        type: string
+        default: 'prod'
+
+concurrency:
+  # Do not interrupt previous workflows
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  deploy-test:
+    name: Deploy (DEV)
+    uses: ./.github/workflows/helm-cd.yml
+    secrets: inherit
+    with:
+      environment: dev
+      tag: ${{ inputs.tag }}

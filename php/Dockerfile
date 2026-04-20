@@ -28,11 +28,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/* \
+    && pecl install memcached-3.4.0 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd intl ldap pdo_pgsql zip \
     && pecl install imap \
     && docker-php-ext-enable imap \
-    && pecl install memcached-3.3.0 \
     && docker-php-ext-enable memcached
 
 ENTRYPOINT ["docker-php-entrypoint"]

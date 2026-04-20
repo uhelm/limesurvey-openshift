@@ -1,8 +1,8 @@
 ---
 apiVersion: v2
-name: limesurvey-postgresql
-description: Deploy a PostgreSQL instance
-icon: https://console.apps.silver.devops.gov.bc.ca/static/assets/postgresql.svg
+name: limesurvey-nginx
+description: Deploy a limesurvey instance
+icon: https://console.apps.silver.devops.gov.bc.ca/static/assets/php.svg
 type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
@@ -15,3 +15,4 @@ version: 0.0.1
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.0.1"
+...

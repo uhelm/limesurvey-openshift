@@ -2,7 +2,10 @@
 global:
   licensePlate: da8021
   sectionTag: -prod
-  host: "deseng-limesurvey.apps.silver.devops.gov.bc.ca"
+  host: "limesurvey-prod.apps.clab.devops.gov.bc.ca"
+  image:
+    repository: ghcr.io/uhelm/limesurvey-openshift
+    tag: prod
 
   vault:
     engine: da8021-prod

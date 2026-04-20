@@ -1,0 +1,12 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: config-limesurvey-nginx
+  namespace: {{ .Values.global.licensePlate }}{{ .Values.global.sectionTag }}
+  labels:
+{{ include "nginx.labels.standard" . | indent 4 }}
+data:
+  default.conf: |
+{{ .Files.Get "nginx/assets/nginx.conf" | indent 4 }}
+...

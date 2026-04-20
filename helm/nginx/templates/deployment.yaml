@@ -22,7 +22,7 @@ metadata:
         }
       ]
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: {{ .Chart.Name | quote }}
@@ -32,15 +32,13 @@ spec:
         app: {{ .Chart.Name | quote }}
     spec:
       volumes:
-        - name: {{ .Values.global.volumeMounts.name }}
-          persistentVolumeClaim:
-            claimName: {{ .Values.global.volumeMounts.name }}
+        
         - name: config-limesurvey-nginx
           configMap:
             name: config-limesurvey-nginx
       containers:
         - name: {{ .Chart.Name | quote }}
-          image: "{{ .Values.global.image.repository }}{{ .Values.global.licensePlate }}-tools/{{ .Chart.Name }}:{{ .Values.global.image.imageStreamTag }}"
+          image: "{{ .Values.global.image.repository }}/{{ .Chart.Name }}:{{ .Values.global.image.tag }}"
           ports:
             - name: {{ .Values.ports.name }}
               containerPort: {{ .Values.ports.containerPort }}
@@ -53,11 +51,6 @@ spec:
               cpu: {{ .Values.resources.limits.cpu }}
               memory: {{ .Values.resources.limits.memory }}
           volumeMounts:
-            - mountPath: {{ .Values.global.volumeMounts.mountPath | quote }}
-              name: {{ .Values.global.volumeMounts.name }}
-              {{- if .Values.global.volumeMounts.subPath }}
-              subPath: {{ .Values.global.volumeMounts.subPath | quote }}
-              {{- end }}
             - mountPath: "/etc/nginx/conf.d"
               name: config-limesurvey-nginx
               readOnly: true
