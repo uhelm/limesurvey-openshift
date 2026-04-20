@@ -25,7 +25,7 @@ permissions: {}
 jobs:
   deploy-test:
     name: Deploy (DEV)
-    uses: ./.github/workflows/helm-cd.yml
+    uses: ./.github/workflows/helm-cd.yaml
     secrets: inherit
     with:
       environment: dev
