@@ -75,10 +75,8 @@ jobs:
             sleep 5
           done
       - name: Set OpenShift project
-        env:
-          OPENSHIFT_PROJECT_LICENSE_PLATE: ${{ secrets.OPENSHIFT_SERVER }}
         run: |
-          oc project $OPENSHIFT_PROJECT_LICENSE_PLATE-${{ github.event.inputs.environment || 'dev' }}
+          oc project $OPENSHIFT_PROJECT_LICENSE_PLATE-${{ secrets.OC_NAMESPACE }}
 
       - name: Update & Build Helm dependencies
         run: |
