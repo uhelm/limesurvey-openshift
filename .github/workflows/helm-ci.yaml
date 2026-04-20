@@ -28,10 +28,10 @@ jobs:
       #    helm dependency update helm
       - name: Validate Helm Chart
         run: |
-          helm lint helm --values helm/app/values.yaml --values helm/app/values-dev.yaml ./helm
-          helm lint helm --values helm/app/values.yaml --values helm/app/values-test.yaml ./helm
-          helm lint helm --values helm/app/values.yaml --values helm/app/values-prod.yaml ./helm
+          helm lint helm --values helm/values.yaml --values helm/values-dev.yaml ./helm
+          helm lint helm --values helm/values.yaml --values helm/values-test.yaml ./helm
+          helm lint helm --values helm/values.yaml --values helm/values-prod.yaml ./helm
           mkdir ~/rendered-templates
-          helm template --debug helm --values helm/app/values.yaml --values helm/app/values-dev.yaml --output-dir ~/rendered-templates/dev ./helm
-          helm template --debug helm --values helm/app/values.yaml --values helm/app/values-test.yaml --output-dir ~/rendered-templates/test ./helm
-          helm template --debug helm --values helm/app/values.yaml --values helm/app/values-prod.yaml --output-dir ~/rendered-templates/prod ./helm
+          helm template --debug helm --values helm/values.yaml --values helm/values-dev.yaml --output-dir ~/rendered-templates/dev ./helm
+          helm template --debug helm --values helm/values.yaml --values helm/values-test.yaml --output-dir ~/rendered-templates/test ./helm
+          helm template --debug helm --values helm/values.yaml --values helm/values-prod.yaml --output-dir ~/rendered-templates/prod ./helm
