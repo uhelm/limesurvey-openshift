@@ -76,17 +76,17 @@ jobs:
           done
       - name: Set OpenShift project
         run: |
-          oc project $OPENSHIFT_PROJECT_LICENSE_PLATE-${{ secrets.OC_NAMESPACE }}
+          oc project ${{ secrets.OC_NAMESPACE }}
 
       - name: Update & Build Helm dependencies
         run: |
-          helm dependency update ./helm/app
-          helm dependency build ./helm/app
+          helm dependency update ./helm
+          helm dependency build ./helm
       - name: Deploy Helm chart
         run: |
-          helm upgrade --install limesurvey ./helm/app \
-            --values ./helm/app/values.yaml \
-            --values ./helm/app/values-${{ github.event.inputs.environment || 'dev' }}.yaml \
+          helm upgrade --install limesurvey ./helm \
+            --values ./helm/values.yaml \
+            --values ./helm/values-${{ github.event.inputs.environment || 'dev' }}.yaml \
             --set-string global.tag="${{ steps.vars.outputs.tag }}" \
       - name: Verify Deployment
         run: |
