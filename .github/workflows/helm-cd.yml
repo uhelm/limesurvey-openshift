@@ -96,7 +96,7 @@ jobs:
           helm upgrade --install limesurvey ./helm \
             --values ./helm/values.yaml \
             --values ./helm/values-${{ inputs.environment || github.event.inputs.environment || 'dev' }}.yaml \
-            --set-string global.tag="${{ steps.vars.outputs.tag }}"
+            --set-string global.image.tag="${{ steps.vars.outputs.tag }}"
       - name: Verify Deployment
         run: |
           oc rollout status deployment/limesurvey-nginx --timeout=180s

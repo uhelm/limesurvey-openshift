@@ -10,17 +10,6 @@ metadata:
     app.openshift.io/runtime-version: {{ .Values.labels.version | quote }}
     app.openshift.io/runtime-namespace: {{ .Values.global.licensePlate }}{{ .Values.global.sectionTag }}
   annotations:
-    image.openshift.io/triggers: |-
-      [
-        {
-          "from": {
-            "kind": "ImageStreamTag",
-            "namespace": "{{ .Values.global.licensePlate }}-tools",
-            "name": "{{ .Chart.Name }}:{{ .Values.global.image.imageStreamTag }}"
-          },
-          "fieldPath": "spec.template.spec.containers[0].image"
-        }
-      ]
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -32,7 +21,6 @@ spec:
         app: {{ .Chart.Name | quote }}
     spec:
       volumes:
-        
         - name: config-limesurvey-nginx
           configMap:
             name: config-limesurvey-nginx
