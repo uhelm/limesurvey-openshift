@@ -1,5 +1,5 @@
 name: Helm - Deploy app to OpenShift
-run-name: Helm Deployment to ${{ github.event.inputs.environment || 'dev' }} - ${{ github.event.head_commit.message || github.run_number }}
+run-name: Helm Deployment to ${{ inputs.environment || github.event.inputs.environment || 'dev' }} - ${{ github.event.head_commit.message || github.run_number }}
 on:
   push:
     branches:
@@ -9,18 +9,14 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: Specify a tag to deploy; defaults to PR number
+        description: "Specify a tag to deploy; defaults to PR number"
         required: false
         type: string
       environment:
         description: "Target environment to deploy"
         required: true
         default: "dev"
-        type: choice
-        options:
-          - dev
-          - test
-          - prod
+        type: string
 
   workflow_dispatch:
     inputs:
