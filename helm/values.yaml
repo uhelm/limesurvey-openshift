@@ -13,6 +13,12 @@ global:
     serviceAccount: da8021-vault
 
 limesurvey-nginx:
+#  volumeMounts:
+#    mountPath: /var/www/html
+#    subPath: ""
+#    name: limesurvey-data
+  image:
+    name: limesurvey-nginx
   replicaCount: 1
   labels:
     version: latest
@@ -26,17 +32,18 @@ limesurvey-nginx:
     protocol: TCP
   resources:
     limits:
-      cpu: 200m
       memory: 512Mi
     requests:
       cpu: 100m
       memory: 128Mi
 
 limesurvey-php:
-  volumeMounts:
-    mountPath: /var/www/html
-    subPath: ""
-    name: limesurvey-data
+#  volumeMounts:
+#    mountPath: /var/www/html
+#    subPath: ""
+#    name: limesurvey-data
+  image:
+    name: limesurvey-php
   pvc:
     size: 500Mi
   labels:
@@ -51,14 +58,53 @@ limesurvey-php:
     protocol: TCP
   resources:
     limits:
-      cpu: 200m
       memory: 512Mi
     requests:
       cpu: 100m
       memory: 256Mi
 
-postgres:
-  pvc:
-    size: 500Mi
+limesurvey-memcached:
+  replicaCount: 1
+  image:
+    repository: docker.io/library
+    name: memcached
+    tag: 1.6
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 11211
+  ports:
+    name: 11211-tcp
+    containerPort: 11211
+    protocol: TCP
+  resources:
+    limits:
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
 
-
+limesurvey-mssql:
+  replicaCount: 1
+  image:
+    repository: mcr.microsoft.com/mssql
+    name: server
+    tag: 2022-latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 1433
+  ports:
+    name: 1433-tcp
+    containerPort: 1433
+    protocol: TCP
+  env:
+    acceptEula: "Y"
+    saPassword: "OverrideYourPassword@123"
+    pid: "Express"
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi

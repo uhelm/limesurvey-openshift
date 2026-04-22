@@ -41,11 +41,12 @@ jobs:
 
   deploy-dev:
     name: Deploy (DEV)
-    uses: ./.github/workflows/helm-cd.yaml
+    uses: ./.github/workflows/helm-cd.yml
     secrets: inherit
+    needs: [vars]
     with:
       environment: dev
-      tag: ${{ inputs.tag }}
+      tag: ${{ needs.vars.outputs.pr }}
 
   promote-images-dev:
     name: Promote Images - Dev
