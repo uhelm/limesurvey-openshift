@@ -26,7 +26,7 @@ spec:
             name: config-limesurvey-nginx
       containers:
         - name: {{ .Chart.Name | quote }}
-          image: "{{ .Values.global.image.repository }}/{{ .Chart.Name }}:{{ .Values.global.image.tag }}"
+          image: "{{ default .Values.image.repository .Values.global.image.repository }}/{{ .Chart.Name }}:{{ .Values.global.image.tag }}"
           ports:
             - name: {{ .Values.ports.name }}
               containerPort: {{ .Values.ports.containerPort }}

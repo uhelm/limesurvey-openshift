@@ -1,19 +1,24 @@
-FROM php:fpm-bookworm
+FROM php:8.3-fpm-bookworm
 
 ENV ROOT_DIR="/var/www/html"
-ENV DOWNLOAD_LOCKFILE="$ROOT_DIR/.limesurvey_downloaded" 
-ENV RELEASE="${LIMESURVEY_RELEASE:-6.15.5+250724.zip}"
-
-# Copy the LimeSurvey download script into the image
-COPY limesurvey-init.sh /usr/local/bin/limesurvey-init.sh
-RUN chmod +x /usr/local/bin/limesurvey-init.sh
+ENV RELEASE="${LIMESURVEY_RELEASE:-6.17.0+260421.zip}"
 
 # Copy the php.ini configuration file
 COPY php.ini /usr/local/etc/php
 
+RUN DEBVERSION=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1) \
+    && curl -sSL -o /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/debian/${DEBVERSION}/packages-microsoft-prod.deb \
+    && dpkg -i /tmp/packages-microsoft-prod.deb \
+    && rm /tmp/packages-microsoft-prod.deb
+
 # PHP Core Extensions
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
+    # && ACCEPT_EULA=Y apt-get install -y mssql-tools18 \
+    && apt-get install --no-install-recommends -y \
     curl \
+    gnupg2 \
+    freetds-dev \
     libc-client-dev \
     libfreetype-dev \
     libicu-dev \
@@ -27,32 +32,35 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libssl-dev \
     libzip-dev \
     memcached \
+    odbcinst \
     postgresql-client \
     pv \
+    unixodbc-dev \
     unzip \
     zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && pecl install memcached-3.4.0 \
+    && rm -rf /var/lib/apt/lists/*
+    RUN pecl install memcached-3.4.0 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd intl ldap pdo_pgsql zip \
-    && pecl install imap \
-    && docker-php-ext-enable imap \
+    && docker-php-ext-install -j$(nproc) gd intl ldap pdo_pgsql zip
+    RUN pecl install imap pdo_sqlsrv \
+    && docker-php-ext-enable imap pdo_sqlsrv \
     && docker-php-ext-enable memcached
+    
+# Copy the LimeSurvey download script into the image
+COPY limesurvey-init.sh /usr/local/bin/limesurvey-init.sh
+RUN chmod +x /usr/local/bin/limesurvey-init.sh
 
-    RUN echo "Checking for LimeSurvey installation..." && \
-    if [ ! -f "$DOWNLOAD_LOCKFILE" ]; then \
-        echo "LimeSurvey not found, downloading..." && \
-        rm -rf "$ROOT_DIR/limesurvey" && \
-        curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
-        echo "Download completed, extracting... (this may take a moment)" && \
-        unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
-        echo "Unzip completed, cleaning up..." && \
-        rm -f /tmp/limesurvey.zip && \
-        touch "$DOWNLOAD_LOCKFILE" && \
-        echo "LimeSurvey downloaded and extracted."; \
-        else \
-        echo "LimeSurvey already present, skipping download."; \
-        fi
+RUN echo "Checking for LimeSurvey installation..." && \
+    echo "Downloading LimeSurvey..." && \
+    rm -rf "$ROOT_DIR/limesurvey" && \
+    curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
+    echo "Download completed, extracting... (this may take a moment)" && \
+    unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
+    echo "Unzip completed, cleaning up..." && \
+    rm -f /tmp/limesurvey.zip && \
+    echo "LimeSurvey downloaded and extracted.";
+
+RUN chmod -R 0777 /var/www/html/limesurvey/tmp/
 
 ENTRYPOINT ["docker-php-entrypoint"]
 CMD ["php-fpm"]

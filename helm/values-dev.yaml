@@ -4,8 +4,7 @@ global:
   sectionTag: -dev
   host: "limesurvey-dev.apps.clab.devops.gov.bc.ca"
   image:
-    repository: ghcr.io/uhelm/limesurvey-openshift
-    tag: latest
+    tag: dev
 
   vault:
     engine: da8021-nonprod
