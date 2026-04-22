@@ -49,7 +49,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name | quote }}
-          image: "{{ default .Values.image.repository .Values.global.image.repository }}/{{ default .Values.image.name .Chart.Name }}:{{ default .Values.image.tag.Values.global.image.tag }}"
+          image: "{{ default .Values.image.repository .Values.global.image.repository }}/{{ default .Values.image.name .Chart.Name }}:{{ default .Values.image.tag .Values.global.image.tag }}"
           ports:
             - name: {{ .Values.ports.name }}
               containerPort: {{ .Values.ports.containerPort }}
