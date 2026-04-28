@@ -14,7 +14,7 @@ global:
 
 limesurvey-nginx:
   volumeMounts:
-    mountPath: /var/www/html
+    mountPath: /var/www/html/limesurvey/application/tmp/
     subPath: ""
     name: limesurvey-data
   image:
@@ -40,7 +40,7 @@ limesurvey-nginx:
 
 limesurvey-php:
   volumeMounts:
-    mountPath: /var/www/html
+    mountPath: /var/www/html/limesurvey/application/tmp/
     subPath: ""
     name: limesurvey-data
   image:

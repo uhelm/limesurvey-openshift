@@ -1,10 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_DIR="/var/www/html"
-DOWNLOAD_LOCKFILE="$ROOT_DIR/.limesurvey_downloaded.lock"
-RELEASE="${LIMESURVEY_RELEASE:-6.17.0+260421.zip}"
-
 MEMCACHED_HOST="${MEMCACHED_HOST:-limesurvey-memcached}"
 
 # PostgreSQL defaults
@@ -51,19 +47,6 @@ echo "=== Initializing Limesurvey ==="
 echo "Database Type: $DB_TYPE"
 
 print_step "Checking for LimeSurvey installation..."
-if [[ ! -f "$DOWNLOAD_LOCKFILE" ]]; then
-  echo "LimeSurvey not found, downloading..."
-  rm -rf "$ROOT_DIR/limesurvey" || echo "WARNING: Unable to remove existing LimeSurvey directory"
-  curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip
-  echo "Download completed, extracting... (this may take a moment)"
-  unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null
-  echo "Unzip completed, cleaning up..."
-  rm -f /tmp/limesurvey.zip
-  touch "$DOWNLOAD_LOCKFILE"
-  echo "LimeSurvey downloaded and extracted."
-else
-  echo "LimeSurvey already present, skipping download."
-fi
 
 CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/email.php"
 

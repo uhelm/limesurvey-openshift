@@ -32,6 +32,12 @@ RUN mkdir -p /tmp/client_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp 
 COPY nginx.conf /etc/nginx
 RUN mkdir -p /var/www/html/
 
+RUN echo "LimeSurvey not found, downloading..." && \
+    curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
+    unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
+    rm -f /tmp/limesurvey.zip && \
+    echo "LimeSurvey downloaded and extracted."
+
 # Claim ownership for the NGiNX user
 RUN chown -R nginx:nginx /usr/share/nginx /var/log/nginx /var/cache/nginx /var/www/html /etc/nginx
 USER nginx
