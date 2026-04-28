@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+ROOT_DIR="/var/www/html"
 MEMCACHED_HOST="${MEMCACHED_HOST:-limesurvey-memcached}"
 
 # PostgreSQL defaults
@@ -49,6 +50,9 @@ echo "Database Type: $DB_TYPE"
 print_step "Checking for LimeSurvey installation..."
 
 CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/email.php"
+
+mkdir -p "$ROOT_DIR/limesurvey/tmp/runtime" "$ROOT_DIR/limesurvey/tmp/runtime/assets" "$ROOT_DIR/limesurvey/tmp/runtime/files"
+touch "$ROOT_DIR/limesurvey/application/config/security.php"
 
 ADMIN_USER="${ADMIN_USER:-admin}"
 ADMIN_FULLNAME="${ADMIN_FULLNAME:-Administrator}"
