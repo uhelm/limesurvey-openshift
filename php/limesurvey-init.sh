@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -xeuo pipefail
 
 ROOT_DIR="/var/www/html"
 MEMCACHED_HOST="${MEMCACHED_HOST:-limesurvey-memcached}"
@@ -9,27 +9,13 @@ PGHOST="${PGHOST:-limesurvey-postgresql}"
 PGPORT="${PGPORT:-5432}"
 PGDATABASE="${PGDATABASE:-limesurvey}"
 
+## No defaults so it crashes when not set
 # MSSQL defaults
-DB_HOST="${DB_HOST:-}"
-DB_PORT="${DB_PORT:-1433}"
-DB_NAME="${DB_NAME:-limesurvey}"
-DB_USER="${DB_USER:-sa}"
-DB_PASSWORD="${DB_PASSWORD:-}"
-
-# Determine database type
-DB_TYPE="${DB_TYPE:-}"
-if [[ -n "$DB_HOST" ]] && [[ "$DB_HOST" == "mssql" || "$DB_HOST" == "localhost" ]]; then
-  DB_TYPE="mssql"
-elif [[ -n "$PGHOST" ]]; then
-  DB_TYPE="pgsql"
-  DB_HOST="$PGHOST"
-  DB_PORT="$PGPORT"
-  DB_NAME="$PGDATABASE"
-  DB_USER="${PGUSER:-}"
-  DB_PASSWORD="${PGPASSWORD:-}"
-else
-  DB_TYPE="pgsql"
-fi
+#DB_HOST="${DB_HOST:-}"
+#DB_PORT="${DB_PORT:-1433}"
+#DB_NAME="${DB_NAME:-limesurvey}"
+#DB_USER="${DB_USER:-sa}"
+#DB_PASSWORD="${DB_PASSWORD:-}"
 
 CURRENT_STEP=1
 TOTAL_STEPS=$(grep -c '^print_step' "${BASH_SOURCE[0]}")
@@ -45,7 +31,6 @@ if [[ -z "$1" ]]; then
 }
 
 echo "=== Initializing Limesurvey ==="
-echo "Database Type: $DB_TYPE"
 
 print_step "Checking for LimeSurvey installation..."
 
@@ -53,6 +38,7 @@ CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/email.php"
 
 mkdir -p "$ROOT_DIR/limesurvey/tmp/runtime" "$ROOT_DIR/limesurvey/tmp/runtime/assets" "$ROOT_DIR/limesurvey/tmp/runtime/files"
 touch "$ROOT_DIR/limesurvey/application/config/security.php"
+
 
 ADMIN_USER="${ADMIN_USER:-admin}"
 ADMIN_FULLNAME="${ADMIN_FULLNAME:-Administrator}"
