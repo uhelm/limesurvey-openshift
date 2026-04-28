@@ -1,7 +1,7 @@
 FROM php:8.3-fpm-bookworm
 
 ENV ROOT_DIR="/var/www/html"
-ENV RELEASE="6.17.0+260421.zip"
+ENV RELEASE="7.0.0-beta2+260415.zip"
 
 RUN DEBVERSION=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1) \
     && curl -sSL -o /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/debian/${DEBVERSION}/packages-microsoft-prod.deb \
@@ -57,7 +57,7 @@ RUN chmod +x /usr/local/bin/limesurvey-init.sh
 RUN mkdir -p /var/www/html/
 
 RUN echo "LimeSurvey not found, downloading..." && \
-    curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
+    curl -L "https://download.limesurvey.org/latest-develop-major/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
     unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
     rm -f /tmp/limesurvey.zip && \
     echo "LimeSurvey downloaded and extracted."
