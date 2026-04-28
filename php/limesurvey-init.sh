@@ -2,9 +2,6 @@
 set -euo pipefail
 
 ROOT_DIR="/var/www/html"
-DOWNLOAD_LOCKFILE="$ROOT_DIR/.limesurvey_downloaded.lock"
-RELEASE="${LIMESURVEY_RELEASE:-6.17.0+260421.zip}"
-
 MEMCACHED_HOST="${MEMCACHED_HOST:-limesurvey-memcached}"
 
 # PostgreSQL defaults
@@ -12,27 +9,13 @@ PGHOST="${PGHOST:-limesurvey-postgresql}"
 PGPORT="${PGPORT:-5432}"
 PGDATABASE="${PGDATABASE:-limesurvey}"
 
+## No defaults so we crash when not set
 # MSSQL defaults
-DB_HOST="${DB_HOST:-}"
-DB_PORT="${DB_PORT:-1433}"
-DB_NAME="${DB_NAME:-limesurvey}"
-DB_USER="${DB_USER:-sa}"
-DB_PASSWORD="${DB_PASSWORD:-}"
-
-# Determine database type
-DB_TYPE="${DB_TYPE:-}"
-if [[ -n "$DB_HOST" ]] && [[ "$DB_HOST" == "mssql" || "$DB_HOST" == "localhost" ]]; then
-  DB_TYPE="mssql"
-elif [[ -n "$PGHOST" ]]; then
-  DB_TYPE="pgsql"
-  DB_HOST="$PGHOST"
-  DB_PORT="$PGPORT"
-  DB_NAME="$PGDATABASE"
-  DB_USER="${PGUSER:-}"
-  DB_PASSWORD="${PGPASSWORD:-}"
-else
-  DB_TYPE="pgsql"
-fi
+#DB_HOST="${DB_HOST:-}"
+#DB_PORT="${DB_PORT:-1433}"
+#DB_NAME="${DB_NAME:-limesurvey}"
+#DB_USER="${DB_USER:-sa}"
+#DB_PASSWORD="${DB_PASSWORD:-}"
 
 CURRENT_STEP=1
 TOTAL_STEPS=$(grep -c '^print_step' "${BASH_SOURCE[0]}")
@@ -48,24 +31,17 @@ if [[ -z "$1" ]]; then
 }
 
 echo "=== Initializing Limesurvey ==="
-echo "Database Type: $DB_TYPE"
 
 print_step "Checking for LimeSurvey installation..."
-if [[ ! -f "$DOWNLOAD_LOCKFILE" ]]; then
-  echo "LimeSurvey not found, downloading..."
-  rm -rf "$ROOT_DIR/limesurvey"
-  curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip
-  echo "Download completed, extracting... (this may take a moment)"
-  unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null
-  echo "Unzip completed, cleaning up..."
-  rm -f /tmp/limesurvey.zip
-  touch "$DOWNLOAD_LOCKFILE"
-  echo "LimeSurvey downloaded and extracted."
-else
-  echo "LimeSurvey already present, skipping download."
-fi
 
 CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/email.php"
+
+mkdir -p "$ROOT_DIR/limesurvey/tmp/runtime" "$ROOT_DIR/limesurvey/tmp/assets" "$ROOT_DIR/limesurvey/tmp/files" || echo "Temporary directories already exist."
+mkdir -p "$ROOT_DIR/limesurvey/upload/admintheme" "$ROOT_DIR/limesurvey/upload/global" "$ROOT_DIR/limesurvey/upload/labels" "$ROOT_DIR/limesurvey/upload/plugins" "$ROOT_DIR/limesurvey/upload/surveys" "$ROOT_DIR/limesurvey/upload/themes" "$ROOT_DIR/limesurvey/upload/themes/survey" "$ROOT_DIR/limesurvey/upload/twig" || echo "Upload directories already exist."
+touch "$ROOT_DIR/limesurvey/application/config/security.php"
+#rm "$ROOT_DIR/limesurvey/tmp/runtime/application.log"
+#ln -s /proc/1/fd/2 "$ROOT_DIR/limesurvey/tmp/runtime/application.log"
+
 
 ADMIN_USER="${ADMIN_USER:-admin}"
 ADMIN_FULLNAME="${ADMIN_FULLNAME:-Administrator}"
@@ -88,7 +64,7 @@ if [[ "$DB_TYPE" == "mssql" ]]; then
       \$pdo = new PDO('sqlsrv:Server=${DB_HOST},${DB_PORT};TrustServerCertificate=True;Database=${DB_NAME}', '${DB_USER}', '${DB_PASSWORD}');
       \$result = \$pdo->query(\"SELECT COUNT(*) FROM information_schema.tables WHERE table_type='BASE TABLE'\");
       \$count = \$result->fetchColumn();
-      echo (\$count > 0) ? 'true' : 'false';
+      echo (\$count > 0) ? 'true' : 'empty';
     } catch (Exception \$e) {
       echo "\$e";
       echo 'false';
@@ -102,7 +78,7 @@ else
   TABLES_EXIST=$([ -n "$table_list_has_results" ] && echo 'true' || echo 'false')
 fi
 
-if [[ "$TABLES_EXIST" != "true" ]]; then
+if [[ "$TABLES_EXIST" == "empty" ]]; then
   echo "Setting up LimeSurvey database..."
   cd "$ROOT_DIR/limesurvey/application/commands"
 
@@ -114,8 +90,11 @@ if [[ "$TABLES_EXIST" != "true" ]]; then
 
   echo "Completing LimeSurvey installation..."
   php "$ROOT_DIR/limesurvey/application/commands/console.php" install "$ADMIN_USER" "$ADMIN_PASSWORD" "$ADMIN_FULLNAME" "$ADMIN_EMAIL"
-else
+elif [[ "$TABLES_EXIST" == "true" ]]; then
   echo "Database appears to be initialized."
+else
+  echo "Error checking database tables. Output was: $TABLES_EXIST"
+  exit 1
 fi
 
 print_step "Initial setup tasks completed."

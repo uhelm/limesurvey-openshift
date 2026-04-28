@@ -35,7 +35,6 @@ spec:
               cpu: {{ .Values.resources.requests.cpu }}
               memory: {{ .Values.resources.requests.memory }}
             limits:
-              cpu: {{ .Values.resources.limits.cpu }}
               memory: {{ .Values.resources.limits.memory }}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File

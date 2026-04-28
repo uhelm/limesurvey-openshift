@@ -1,16 +1,21 @@
----
+{{ $pvcs := .Values.pvcs }}
+{{ range $index, $pvc := $pvcs }}
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.volumeMounts.name }}
-  namespace: {{ .Values.global.licensePlate }}{{ .Values.global.sectionTag }}
+  name: {{ required "PVC name is required" $pvc.name }}
+  namespace: {{ $.Values.global.licensePlate }}{{ $.Values.global.sectionTag }}
   labels:
-{{ include "php.labels.standard" . | indent 4 }}
+{{ include "php.labels.standard" $ | indent 4 }}
 spec:
-  storageClassName: netapp-file-standard
+  storageClassName: {{ default "netapp-file-standard" $pvc.storageClassName }}
   accessModes:
-    - ReadWriteMany
+    - {{ required "PVC accessMode is required" $pvc.accessMode }}
   resources:
     requests:
-      storage: {{ .Values.pvc.size | quote }}
-...
+      storage: {{ default $.Values.pvc.size $pvc.size | quote }}
+{{- if ne $index (sub (len $pvcs) 1) }}
+---
+{{- end }}
+{{- end }}

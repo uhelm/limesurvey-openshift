@@ -1,4 +1,5 @@
-name: Analysis
+name: Scan & Validate
+run-name: "Analysis (${{ github.event.pull_request.head.ref || github.run_number }})"
 
 on:
   push:
@@ -15,14 +16,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # https://github.com/github/codeql-action
+  helm-validate:
+    runs-on: ubuntu-24.04
+    name: Validate Helm Templates
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6
+      - name: Update & Build Helm dependencies
+        run: |
+          helm dependency build helm
+          helm dependency update helm
+      - name: Validate Helm Chart
+        run: |
+          helm lint ./helm --values helm/values.yaml --values helm/values-dev.yaml
+          helm lint ./helm --values helm/values.yaml --values helm/values-test.yaml
+          helm lint ./helm --values helm/values.yaml --values helm/values-prod.yaml
+          mkdir ~/rendered-templates
+          helm template --debug ./helm --values helm/values.yaml --values helm/values-dev.yaml --output-dir ~/rendered-templates/dev
+          helm template --debug ./helm --values helm/values.yaml --values helm/values-test.yaml --output-dir ~/rendered-templates/test
+          helm template --debug ./helm --values helm/values.yaml --values helm/values-prod.yaml --output-dir ~/rendered-templates/prod
+
   codeql:
     name: CodeQL
     if: (! github.event.pull_request.draft)
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6
       - uses: github/codeql-action/init@v4
         with:
           languages: actions
@@ -39,10 +59,9 @@ jobs:
   trivy:
     name: Trivy Security Scan
     if: (! github.event.pull_request.draft)
-    continue-on-error: true
     permissions:
       security-events: write
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6

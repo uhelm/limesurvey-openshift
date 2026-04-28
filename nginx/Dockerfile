@@ -1,7 +1,7 @@
 FROM nginx:1.29
 
 ENV ROOT_DIR="/var/www/html"
-ENV RELEASE="${LIMESURVEY_RELEASE:-6.17.0+260421.zip}"
+ENV RELEASE="7.0.0-beta2+260415.zip"
 
 # Install the GNU Compiler Collection
 RUN apt-get update \
@@ -31,6 +31,12 @@ RUN mkdir -p /tmp/client_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp 
 # Copy the NGINX configuration files
 COPY nginx.conf /etc/nginx
 RUN mkdir -p /var/www/html/
+
+RUN echo "LimeSurvey not found, downloading..." && \
+    curl -L "https://download.limesurvey.org/latest-develop-major/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
+    unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
+    rm -f /tmp/limesurvey.zip && \
+    echo "LimeSurvey downloaded and extracted."
 
 # Claim ownership for the NGiNX user
 RUN chown -R nginx:nginx /usr/share/nginx /var/log/nginx /var/cache/nginx /var/www/html /etc/nginx

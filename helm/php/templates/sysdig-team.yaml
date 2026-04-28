@@ -1,0 +1,15 @@
+---
+apiVersion: ops.gov.bc.ca/v1alpha1
+kind: SysdigTeam
+metadata:
+  name: {{ .Values.global.app }}-sysdigteam
+  namespace: {{ .Values.global.licensePlate }}-tools
+spec:
+  team:
+    description: The Sysdig Team for the OpenShift Project Set PSP
+    users:
+      - name: uwe.helm@gov.bc.ca
+        role: ROLE_TEAM_EDIT
+      - name: james.w.payer@gov.bc.ca
+        role: ROLE_TEAM_EDIT
+...

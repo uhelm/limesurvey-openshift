@@ -1,5 +1,6 @@
 ---
 global:
+  app: limesurvey
   licensePlate: da8021
   sectionTag: -dev
   image:
@@ -14,7 +15,7 @@ global:
 
 limesurvey-nginx:
   volumeMounts:
-    mountPath: /var/www/html
+    mountPath: /var/www/html/limesurvey/tmp/
     subPath: ""
     name: limesurvey-data
   image:
@@ -39,10 +40,18 @@ limesurvey-nginx:
       memory: 128Mi
 
 limesurvey-php:
-  volumeMounts:
-    mountPath: /var/www/html
-    subPath: ""
-    name: limesurvey-data
+  pvcs:
+    - name: limesurvey-data
+      mountPath: /var/www/html/limesurvey/tmp/
+      subPath: ""
+      size: 1Gi
+      accessMode: ReadWriteMany
+    - name: limesurvey-upload
+      mountPath: /var/www/html/limesurvey/upload/
+      subPath: ""
+      size: 1Gi
+      accessMode: ReadWriteMany
+      storageClassName: netapp-file-backup
   image:
     name: limesurvey-php
   pvc:
@@ -89,6 +98,7 @@ limesurvey-memcached:
       memory: 64Mi
 
 limesurvey-mssql:
+  enabled: true
   replicaCount: 1
   image:
     repository: mcr.microsoft.com/mssql

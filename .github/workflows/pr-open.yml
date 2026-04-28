@@ -1,8 +1,13 @@
-name: PR Opened - Build
+name: Build - PR Open
+run-name: "Build (PR #${{ github.event.pull_request.number }})"
+
 
 on:
   pull_request:
-  merge_group:
+    paths:
+      - 'php/**'
+      - 'nginx/**'
+      - '.github/workflows/**'
 
 concurrency:
   # Cancel in progress for PR open and close, but not merge_group
@@ -29,14 +34,9 @@ jobs:
 
             Thanks for the PR!
 
-            Deployments, as required, will be available below:
-            - [nginx](https://${{ env.PREFIX }}-frontend.${{ env.DOMAIN }})
+            After merge, new images are deoployed and promoted to DEV:
+            - [DEV Homepage](https://limesurvey-dev.${{ env.DOMAIN }})
 
-            Please create PRs in draft mode.  Mark as ready to enable:
-            - [Analysis Workflow](https://github.com/${{ github.repository }}/actions/workflows/analysis.yml)
-
-            After merge, new images are promoted to DEV:
-            - [Merge Workflow](https://github.com/${{ github.repository }}/actions/workflows/merge.yml)
 
   # Get PR number for merge queues, otherwise jusr use github.event.nuber
   vars:

@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: limesurvey-app
+name: limesurvey
 description: Deploy LimeSurvey
 icon: https://console.apps.clab.devops.gov.bc.ca/static/assets/helm.svg
 type: application
@@ -29,3 +29,4 @@ dependencies:
   - name: limesurvey-mssql
     version: "~0.0.1"
     repository: "file://mssql"
+    condition: limesurvey-mssql.enabled

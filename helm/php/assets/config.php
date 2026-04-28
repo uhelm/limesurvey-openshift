@@ -1,7 +1,6 @@
 <?php if (!defined('BASEPATH')) {
     exit('No direct script access allowed');
 }
-
 return array(
     'name' => 'LimeSurvey',
     'components' => array(
@@ -25,14 +24,15 @@ return array(
             'routes' => array(
               'filerror' => array(
                 'class' => 'CFileLogRoute',
-                'levels' => 'warning, error',
+                'levels' => 'trace, debug, info, warning, error',
+                'logFile' => 'application.log',
               ),
             ),
           ),
         'urlManager' => array(
-            'urlFormat' => 'get',
+            'urlFormat' => 'path',
             'rules' => require('routes.php'),
-            'showScriptName' => true,
+            'showScriptName' => false,
         ),
     ),
     'config' => array(
