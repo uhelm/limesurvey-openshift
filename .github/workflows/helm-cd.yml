@@ -1,4 +1,4 @@
-name: Helm - Deploy app to OpenShift
+name: Helm - Deploy to OpenShift
 run-name: Helm Deployment to ${{ inputs.environment || github.event.inputs.environment || 'dev' }} - ${{ github.event.head_commit.message || github.run_number }}
 on:
   push:
@@ -30,15 +30,16 @@ on:
           - test
           - prod
       tag:
-        description: Specify a tag to deploy; defaults to PR number
+        description: Specify a tag to deploy
         required: false
         type: string
         
-
 jobs:
   helm-deploy:
     environment: ${{ inputs.environment || github.event.inputs.environment || 'dev' }}
     runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
     steps:
        # Variables
       - if: inputs.tag  == ''
@@ -101,3 +102,21 @@ jobs:
         run: |
           oc rollout status deployment/limesurvey-nginx --timeout=180s
           oc rollout status deployment/limesurvey-php --timeout=180s
+
+  promote-images:
+    name: Promote Images
+    needs: [helm-deploy]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        package: [php, nginx]
+    timeout-minutes: 2
+    steps:
+      - uses: shrink/actions-docker-registry-tag@v4
+        with:
+          registry: ghcr.io
+          repository: ${{ github.repository }}/limesurvey-${{ matrix.package }}
+          target: ${{ needs.helm-deploy.outputs.tag }}
+          tags: dev # Promote images AFTER successful deploy

@@ -1,4 +1,4 @@
-name: Helm - Validate and Render Templates
+name: Helm - Validate Templates
 run-name: Helm Validation/CI - ${{ github.event.head_commit.message || github.run_number }}
 on:
   pull_request:

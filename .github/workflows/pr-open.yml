@@ -1,4 +1,4 @@
-name: PR Opened
+name: PR Opened - Build
 
 on:
   pull_request:
