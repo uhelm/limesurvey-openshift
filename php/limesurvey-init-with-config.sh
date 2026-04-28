@@ -49,6 +49,11 @@ if [[ -z "$1" ]]; then
 
 echo "=== Initializing Limesurvey ==="
 echo "Database Type: $DB_TYPE"
+print_step "Loading secrets..."
+[[ -f  "/vault/secrets/limesurvey" ]] &&
+  source /vault/secrets/limesurvey
+[[ -f  "/vault/secrets/mssql" ]] &&
+  source /vault/secrets/mssql
 
 print_step "Checking for LimeSurvey installation..."
 if [[ ! -f "$DOWNLOAD_LOCKFILE" ]]; then
@@ -64,6 +69,82 @@ if [[ ! -f "$DOWNLOAD_LOCKFILE" ]]; then
 else
   echo "LimeSurvey already present, skipping download."
 fi
+
+CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/config.php"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "Config file not found, creating a new one."
+  if [[ "$DB_TYPE" == "mssql" ]]; then
+    cp "$ROOT_DIR/limesurvey/application/config/config-sample-sqlsrv.php" "$CONFIG_FILE"
+  else
+    cp "$ROOT_DIR/limesurvey/application/config/config-sample-pgsql.php" "$CONFIG_FILE"
+  fi
+fi
+
+# Update DB config block in config.php
+CONFIG_START_LINE=$(grep -n "'db' => array(" "$CONFIG_FILE" | cut -d: -f1)
+CONFIG_END_LINE=$(grep -n " )," "$CONFIG_FILE" | cut -d: -f1 | head -n 1)
+
+if [[ "$DB_TYPE" == "mssql" ]]; then
+  CONNECTION_STRING="sqlsrv:Server=${DB_HOST},${DB_PORT};Database=${DB_NAME};TrustServerCertificate=True"
+  sed -i "${CONFIG_START_LINE},${CONFIG_END_LINE}c \
+        'db' => array(\n\
+          'connectionString' => '${CONNECTION_STRING}',\n\
+          'emulatePrepare' => true,\n\
+          'username' => getenv('DB_USER'),\n\
+          'password' => getenv('DB_PASSWORD'),\n\
+          'charset' => 'utf8',\n\
+          'tablePrefix' => '',\n\
+          'initSQLs'=>array('SET DATEFORMAT ymd;', 'SET QUOTED_IDENTIFIER ON;')),\n\
+        'cache'=>array(\n\
+          'class' => 'CMemCache',\n\
+          'useMemcached' => true,\n\
+          'servers' => array(array(\n\
+            'host' => '${MEMCACHED_HOST}',\n\
+            'port' => 11211,\n\
+            'weight' => 1))),\n\
+        # logs to /var/www/html/limesurvey/tmp/runtime/application.log
+        'log' => array(
+          'routes' => array(
+            'filerror' => array(
+              'class' => 'CFileLogRoute',
+              'levels' => 'warning, error',),))
+        )," "$CONFIG_FILE"
+
+else
+  sed -i "${CONFIG_START_LINE},${CONFIG_END_LINE}c \
+        'db' => array(\n\
+          'connectionString' => 'pgsql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_NAME};user=${DB_USER};password=${DB_PASSWORD}',\n\
+          'emulatePrepare' => true,\n\
+          'username' => '${DB_USER}',\n\
+          'password' => '${DB_PASSWORD}',\n\
+          'charset' => 'utf8',\n\
+          'tablePrefix' => '',),\n\
+        'cache'=>array(\n\
+          'class' => 'CMemCache',\n\
+          'usememcached' => true,\n\
+          'servers' => array(\n\
+              'host' => 'memcached',\n\
+              'port' => 11211,\n\
+              'weight' => 1),\n\
+        )," "$CONFIG_FILE"
+fi
+print_step "Database configuration updated in $CONFIG_FILE."
+
+CONFIG_START_LINE=$(grep -nE "'config' ?=> ?array\(" "$CONFIG_FILE" | cut -d: -f1)
+CONFIG_END_LINE=$(grep -nE "\)$" "$CONFIG_FILE" | cut -d: -f1 | tail -n 1)
+
+sed -i "${CONFIG_START_LINE},${CONFIG_END_LINE}c \
+      'config' => array(\n\
+          'baseUrl' => '/limesurvey',\n\
+          'debug' => 0,\n\
+          'debugsql' => 0,\n\
+          'force_ssl' => true,\n\
+          'language' => 'en',\n\
+          'sitename' => 'BC Gov Survey',\n\
+      )\
+" "$CONFIG_FILE"
+print_step "General configuration updated in $CONFIG_FILE."
 
 CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/email.php"
 

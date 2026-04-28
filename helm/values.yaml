@@ -67,6 +67,7 @@ limesurvey-php:
 
 limesurvey-memcached:
   replicaCount: 1
+  command: ["memcached", "-vv"]
   image:
     repository: docker.io/library
     name: memcached

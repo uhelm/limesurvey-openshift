@@ -2,9 +2,6 @@ FROM php:8.3-fpm-bookworm
 
 ENV ROOT_DIR="/var/www/html"
 
-# Copy the php.ini configuration file
-COPY php.ini /usr/local/etc/php
-
 RUN DEBVERSION=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1) \
     && curl -sSL -o /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/debian/${DEBVERSION}/packages-microsoft-prod.deb \
     && dpkg -i /tmp/packages-microsoft-prod.deb \
