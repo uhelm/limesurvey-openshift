@@ -9,14 +9,14 @@ global:
   vault:
     enabled: true
     namespace: platform-services
-    authPath: "auth/da8021-clab"
+    authPath: "auth/k8s-clab"
     serviceAccount: da8021-vault
 
 limesurvey-nginx:
-#  volumeMounts:
-#    mountPath: /var/www/html
-#    subPath: ""
-#    name: limesurvey-data
+  volumeMounts:
+    mountPath: /var/www/html/limesurvey/tmp/
+    subPath: ""
+    name: limesurvey-data
   image:
     name: limesurvey-nginx
   replicaCount: 1
@@ -32,20 +32,21 @@ limesurvey-nginx:
     protocol: TCP
   resources:
     limits:
+      cpu: 500m
       memory: 512Mi
     requests:
       cpu: 100m
       memory: 128Mi
 
 limesurvey-php:
-#  volumeMounts:
-#    mountPath: /var/www/html
-#    subPath: ""
-#    name: limesurvey-data
+  volumeMounts:
+    mountPath: /var/www/html/limesurvey/tmp/
+    subPath: ""
+    name: limesurvey-data
   image:
     name: limesurvey-php
   pvc:
-    size: 500Mi
+    size: 1Gi
   labels:
     version: latest
     runtime: php
@@ -58,6 +59,7 @@ limesurvey-php:
     protocol: TCP
   resources:
     limits:
+      cpu: 500m
       memory: 512Mi
     requests:
       cpu: 100m
@@ -65,6 +67,7 @@ limesurvey-php:
 
 limesurvey-memcached:
   replicaCount: 1
+  command: ["memcached", "-vv"]
   image:
     repository: docker.io/library
     name: memcached
@@ -79,6 +82,7 @@ limesurvey-memcached:
     protocol: TCP
   resources:
     limits:
+      cpu: 500m
       memory: 128Mi
     requests:
       cpu: 50m
@@ -104,7 +108,14 @@ limesurvey-mssql:
     pid: "Express"
   resources:
     limits:
-      memory: 1Gi
+      cpu: 1
+      memory: 4Gi
     requests:
       cpu: 100m
       memory: 512Mi
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    mountPath: /var/opt/mssql      

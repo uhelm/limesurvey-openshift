@@ -1,7 +1,7 @@
 FROM nginx:1.29
 
 ENV ROOT_DIR="/var/www/html"
-ENV RELEASE="${LIMESURVEY_RELEASE:-6.17.0+260421.zip}"
+ENV RELEASE="7.0.0-beta2+260415.zip"
 
 # Install the GNU Compiler Collection
 RUN apt-get update \
@@ -17,22 +17,27 @@ RUN apt-get update \
     /var/cache/nginx/scgi_temp \
     /var/cache/nginx/uwsgi_temp
 
+ARG DEBUG_BUILD=true
+
+# Add debugging tools into builds if enabled
+RUN if [ ${DEBUG_BUILD} = true ]; then \
+  apt update && apt-get install --no-install-recommends -y jq vim procps iputils-ping less; \
+fi
+
+# Create all necessary temp and cache directories
+RUN mkdir -p /tmp/client_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp /tmp/cache/nginx \
+    && chmod -R 777 /tmp/client_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp /tmp/cache/nginx
+
 # Copy the NGINX configuration files
-COPY nginx.pid /var/log/nginx
 COPY nginx.conf /etc/nginx
 RUN mkdir -p /var/www/html/
 
-RUN echo "Checking for LimeSurvey installation..." && \
-    echo "Downloading LimeSurvey..." && \
-    rm -rf "$ROOT_DIR/limesurvey" && \
-    curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
-    echo "Download completed, extracting... (this may take a moment)" && \
+RUN echo "LimeSurvey not found, downloading..." && \
+    curl -L "https://download.limesurvey.org/latest-develop-major/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
     unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
-    echo "Unzip completed, cleaning up..." && \
     rm -f /tmp/limesurvey.zip && \
-    echo "LimeSurvey downloaded and extracted.";
+    echo "LimeSurvey downloaded and extracted."
 
 # Claim ownership for the NGiNX user
-RUN chown -R nginx:nginx /usr/share/nginx /var/log/nginx /var/cache/nginx /var/www/html /etc/nginx \
-    && chmod 777 /var/log/nginx/nginx.pid
+RUN chown -R nginx:nginx /usr/share/nginx /var/log/nginx /var/cache/nginx /var/www/html /etc/nginx
 USER nginx

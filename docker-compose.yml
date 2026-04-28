@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  php:
+    build: ./php
+    container_name: limesurvey-php
+    environment:
+      - PHP_FPM_LISTEN=9000
+      #- DB_TYPE=mssql
+      #- DB_HOST=mssql
+      #- DB_PORT=1433
+      #- DB_NAME=limesurvey
+      #- DB_USER=sa
+      #- DB_PASSWORD=YourPassword@123  # Change this to a secure password
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=limesurvey
+      - PGUSER=postgres
+      - PGPASSWORD=YourPassword@123  # Change this to a secure password
+    cap_add:
+      - SYS_PTRACE
+    depends_on:
+      - postgres
+    ports:
+      - "9000:9000"
+    networks:
+      - limesurvey-network
+    volumes:
+      - limesurvey-data:/var/www/html:rw
+      - ./php/limesurvey-init.sh:/usr/local/bin/limesurvey-init.sh:rw
+      - ./php/php.ini:/usr/local/etc/php/php.ini:ro
+    command: sh -c "/usr/local/bin/limesurvey-init.sh && php-fpm"
+
+  nginx:
+    build: ./nginx
+    container_name: limesurvey-nginx
+    ports:
+      - "8080:8080"
+    depends_on:
+      - php
+      - mssql
+    volumes:
+      - limesurvey-data:/var/www/html:ro
+      - ./helm/nginx/assets/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - limesurvey-network
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: limesurvey-mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourPassword@123  # Change this to a secure password (min 8 chars, uppercase, lowercase, number, special char)
+      - MSSQL_PID=Express  # Use Express edition (free)
+    volumes:
+      - mssql_data:/var/opt/mssql/data
+    ports:
+      - "1433:1433"  # Optional: expose for external access
+    networks:
+      - limesurvey-network
+  mssql-tools:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: limesurvey-mssql-tools
+    depends_on:
+      - mssql
+    networks:
+      - limesurvey-network
+    command: sleep infinity  # Keep the container running for interactive use
+
+  memcached:
+    container_name: limesurvey-memcached
+    image: memcached:latest
+    ports:
+      - "11211:11211"
+    networks:
+      - limesurvey-network
+    restart: always
+    command: memcached -v
+
+  postgres:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    container_name: limesurvey-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=YourPassword@123  # Change this to a secure password
+      - POSTGRES_DB=limesurvey
+    ports:
+      - "5432:5432"  # Optional: expose for external access
+    networks:
+      - limesurvey-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  mssql_data:
+  postgres_data:
+  limesurvey-data:
+
+networks:
+  limesurvey-network:
+    driver: bridge

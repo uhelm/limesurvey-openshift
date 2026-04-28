@@ -14,5 +14,5 @@ spec:
       targetPort: {{ .Values.service.port }}
   type: ClusterIP
   selector:
-    app: {{ .Chart.Name | quote }}
+    app.kubernetes.io/name: {{ .Chart.Name | quote }}
 ...

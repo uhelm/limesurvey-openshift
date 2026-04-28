@@ -1,34 +1,21 @@
 #!/bin/bash
-set -euo pipefail
+set -xeuo pipefail
 
 ROOT_DIR="/var/www/html"
+MEMCACHED_HOST="${MEMCACHED_HOST:-limesurvey-memcached}"
 
 # PostgreSQL defaults
 PGHOST="${PGHOST:-limesurvey-postgresql}"
 PGPORT="${PGPORT:-5432}"
 PGDATABASE="${PGDATABASE:-limesurvey}"
 
+## No defaults so it crashes when not set
 # MSSQL defaults
-DB_HOST="${DB_HOST:-}"
-DB_PORT="${DB_PORT:-1433}"
-DB_NAME="${DB_NAME:-limesurvey}"
-DB_USER="${DB_USER:-sa}"
-DB_PASSWORD="${DB_PASSWORD:-}"
-
-# Determine database type
-DB_TYPE="${DB_TYPE:-}"
-if [[ -n "$DB_HOST" ]] && [[ "$DB_HOST" == "mssql" || "$DB_HOST" == "localhost" ]]; then
-  DB_TYPE="mssql"
-elif [[ -n "$PGHOST" ]]; then
-  DB_TYPE="pgsql"
-  DB_HOST="$PGHOST"
-  DB_PORT="$PGPORT"
-  DB_NAME="$PGDATABASE"
-  DB_USER="${PGUSER:-}"
-  DB_PASSWORD="${PGPASSWORD:-}"
-else
-  DB_TYPE="pgsql"
-fi
+#DB_HOST="${DB_HOST:-}"
+#DB_PORT="${DB_PORT:-1433}"
+#DB_NAME="${DB_NAME:-limesurvey}"
+#DB_USER="${DB_USER:-sa}"
+#DB_PASSWORD="${DB_PASSWORD:-}"
 
 CURRENT_STEP=1
 TOTAL_STEPS=$(grep -c '^print_step' "${BASH_SOURCE[0]}")
@@ -44,90 +31,14 @@ if [[ -z "$1" ]]; then
 }
 
 echo "=== Initializing Limesurvey ==="
-echo "Database Type: $DB_TYPE"
-print_step "Loading secrets..."
-[[ -f  "/vault/secrets/limesurvey" ]] &&
-  source /vault/secrets/limesurvey
 
-CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/config.php"
-
-if [[ ! -f "$CONFIG_FILE" ]]; then
-  echo "Config file not found, creating a new one."
-  if [[ "$DB_TYPE" == "mssql" ]]; then
-    cp "$ROOT_DIR/limesurvey/application/config/config-sample-sqlsrv.php" "$CONFIG_FILE"
-  else
-    cp "$ROOT_DIR/limesurvey/application/config/config-sample-pgsql.php" "$CONFIG_FILE"
-  fi
-fi
-
-# Update DB config block in config.php
-CONFIG_START_LINE=$(grep -n "'db' => array(" "$CONFIG_FILE" | cut -d: -f1)
-CONFIG_END_LINE=$(grep -n " )," "$CONFIG_FILE" | cut -d: -f1 | head -n 1)
-
-if [[ "$DB_TYPE" == "mssql" ]]; then
-  CONNECTION_STRING="sqlsrv:Server=${DB_HOST},${DB_PORT};Database=${DB_NAME};TrustServerCertificate=True"
-  sed -i "${CONFIG_START_LINE},${CONFIG_END_LINE}c \
-        'db' => array(\n\
-          'connectionString' => '${CONNECTION_STRING}',\n\
-          'emulatePrepare' => true,\n\
-          'username' => getenv('DB_USER'),\n\
-          'password' => getenv('DB_PASSWORD'),\n\
-          'charset' => 'utf8',\n\
-          'tablePrefix' => '',\n\
-          'initSQLs'=>array('SET DATEFORMAT ymd;', 'SET QUOTED_IDENTIFIER ON;'),\n\
-        ),\n\
-          'cache'=>array(\n\
-            'class' => 'CMemCache',\n\
-            'useMemcached' => true,\n\
-            'servers' => array(array(\n\
-                'host' => 'memcached',\n\
-                'port' => 11211,\n\
-                'weight' => 1\n\
-            )),\n\
-          ),\
-      " "$CONFIG_FILE"
-
-  sed -i "${CONFIG_START_LINE}c\
-      " "$CONFIG_FILE"
-else
-  sed -i "${CONFIG_START_LINE},${CONFIG_END_LINE}c \
-        'db' => array(\n\
-          'connectionString' => 'pgsql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_NAME};user=${DB_USER};password=${DB_PASSWORD}',\n\
-          'emulatePrepare' => true,\n\
-          'username' => '${DB_USER}',\n\
-          'password' => '${DB_PASSWORD}',\n\
-          'charset' => 'utf8',\n\
-          'tablePrefix' => '',\n\
-        ),\n\
-        'cache'=>array(\n\
-          'class' => 'CMemCache',\n\
-          'usememcached' => true,\n\
-          'servers' => array(\n\
-              'host' => 'memcached',\n\
-              'port' => 11211,\n\
-              'weight' => 1\n\
-          ),\n\
-        ),\
-      " "$CONFIG_FILE"
-fi
-print_step "Database configuration updated in $CONFIG_FILE."
-
-CONFIG_START_LINE=$(grep -nE "'config' ?=> ?array\(" "$CONFIG_FILE" | cut -d: -f1)
-CONFIG_END_LINE=$(grep -nE "\)$" "$CONFIG_FILE" | cut -d: -f1 | tail -n 1)
-
-sed -i "${CONFIG_START_LINE},${CONFIG_END_LINE}c \
-      'config' => array(\n\
-          'baseUrl' => '/limesurvey',\n\
-          'debug' => 0,\n\
-          'debugsql' => 0,\n\
-          'force_ssl' => true,\n\
-          'language' => 'en',\n\
-          'sitename' => 'BC Gov Survey',\n\
-      )\n\
-      " "$CONFIG_FILE"
-print_step "General configuration updated in $CONFIG_FILE."
+print_step "Checking for LimeSurvey installation..."
 
 CONFIG_FILE="$ROOT_DIR/limesurvey/application/config/email.php"
+
+mkdir -p "$ROOT_DIR/limesurvey/tmp/runtime" "$ROOT_DIR/limesurvey/tmp/runtime/assets" "$ROOT_DIR/limesurvey/tmp/runtime/files"
+touch "$ROOT_DIR/limesurvey/application/config/security.php"
+
 
 ADMIN_USER="${ADMIN_USER:-admin}"
 ADMIN_FULLNAME="${ADMIN_FULLNAME:-Administrator}"

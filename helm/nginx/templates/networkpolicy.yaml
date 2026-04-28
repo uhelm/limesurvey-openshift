@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Chart.Name }}-allow-from-openshift-ingress
+  labels: {{ include "nginx.labels.standard" . | nindent 4 }}
+spec:
+  # This policy allows any pod with a route & service combination
+  # to accept traffic from the OpenShift router pods. This is
+  # required for things outside of OpenShift (like the Internet)
+  # to reach your pods.
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name | quote}}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Chart.Name }}-allow-same-namespace
+  labels: {{ include "nginx.labels.standard" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name | quote }}
+  ingress:
+    - from:
+        - podSelector: {}
+  policyTypes:
+    - Ingress

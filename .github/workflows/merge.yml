@@ -1,4 +1,4 @@
-name: PR Merged
+name: PR Merged - Deploy to Dev
 
 on:
   push:
@@ -6,14 +6,7 @@ on:
     paths-ignore:
       - '*.md'
       - '.github/**'
-      - '.github/graphics/**'
       - '!.github/workflows/**'
-  workflow_dispatch:
-    inputs:
-      pr:
-        description: "PR num of image to deploy"
-        required: false
-        type: string
 
 concurrency:
   # Do not interrupt previous workflows
@@ -47,21 +40,3 @@ jobs:
     with:
       environment: dev
       tag: ${{ needs.vars.outputs.pr }}
-
-  promote-images-dev:
-    name: Promote Images - Dev
-    needs: [deploy-dev, vars]
-    runs-on: ubuntu-24.04
-    permissions:
-      packages: write
-    strategy:
-      matrix:
-        package: [php, nginx]
-    timeout-minutes: 2
-    steps:
-      - uses: shrink/actions-docker-registry-tag@v4
-        with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}/${{ matrix.package }}
-          target: ${{ needs.vars.outputs.pr }}
-          tags: dev  #Promote images AFTER successful deploy

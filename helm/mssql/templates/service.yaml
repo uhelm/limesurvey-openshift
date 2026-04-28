@@ -4,11 +4,11 @@ kind: Service
 metadata:
   name: {{ .Chart.Name | quote }}
   labels:
-    app: {{ .Chart.Name | quote }}
+    app.kubernetes.io/name: {{ .Chart.Name | quote }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: {{ .Chart.Name | quote }}
+    app.kubernetes.io/name: {{ .Chart.Name | quote }}
   ports:
     - name: {{ .Values.ports.name }}
       port: {{ .Values.service.port }}

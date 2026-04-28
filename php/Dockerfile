@@ -1,10 +1,7 @@
 FROM php:8.3-fpm-bookworm
 
 ENV ROOT_DIR="/var/www/html"
-ENV RELEASE="${LIMESURVEY_RELEASE:-6.17.0+260421.zip}"
-
-# Copy the php.ini configuration file
-COPY php.ini /usr/local/etc/php
+ENV RELEASE="7.0.0-beta2+260415.zip"
 
 RUN DEBVERSION=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1) \
     && curl -sSL -o /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/debian/${DEBVERSION}/packages-microsoft-prod.deb \
@@ -38,29 +35,34 @@ RUN apt-get update \
     unixodbc-dev \
     unzip \
     zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-    RUN pecl install memcached-3.4.0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && pecl install memcached-3.4.0 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd intl ldap pdo_pgsql zip
-    RUN pecl install imap pdo_sqlsrv \
+    && docker-php-ext-install -j$(nproc) gd intl ldap pdo_pgsql zip \
+    && pecl install imap pdo_sqlsrv \
     && docker-php-ext-enable imap pdo_sqlsrv \
     && docker-php-ext-enable memcached
+
+ARG DEBUG_BUILD=true
+
+# Add debugging tools into builds if enabled
+RUN if [ ${DEBUG_BUILD} = true ]; then \
+  apt update && apt-get install --no-install-recommends -y jq vim procps iputils-ping less; \
+fi
     
 # Copy the LimeSurvey download script into the image
 COPY limesurvey-init.sh /usr/local/bin/limesurvey-init.sh
 RUN chmod +x /usr/local/bin/limesurvey-init.sh
 
-RUN echo "Checking for LimeSurvey installation..." && \
-    echo "Downloading LimeSurvey..." && \
-    rm -rf "$ROOT_DIR/limesurvey" && \
-    curl -L "https://download.limesurvey.org/latest-master/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
-    echo "Download completed, extracting... (this may take a moment)" && \
-    unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
-    echo "Unzip completed, cleaning up..." && \
-    rm -f /tmp/limesurvey.zip && \
-    echo "LimeSurvey downloaded and extracted.";
+RUN mkdir -p /var/www/html/
 
-RUN chmod -R 0777 /var/www/html/limesurvey/tmp/
+RUN echo "LimeSurvey not found, downloading..." && \
+    curl -L "https://download.limesurvey.org/latest-develop-major/limesurvey${RELEASE}" -o /tmp/limesurvey.zip && \
+    unzip -o /tmp/limesurvey.zip -d "$ROOT_DIR" | pv -lf -s "$(unzip -l /tmp/limesurvey.zip | wc -l)" > /dev/null && \
+    rm -f /tmp/limesurvey.zip && \
+    echo "LimeSurvey downloaded and extracted."
+
+RUN chmod 777 "$ROOT_DIR/limesurvey/application/config/"
 
 ENTRYPOINT ["docker-php-entrypoint"]
 CMD ["php-fpm"]

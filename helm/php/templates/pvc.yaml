@@ -1,6 +1,4 @@
-{{- /*
 ---
-  This file is part of the LimeSurvey OpenShift deployment.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -16,4 +14,3 @@ spec:
     requests:
       storage: {{ .Values.pvc.size | quote }}
 ...
-*/ -}}

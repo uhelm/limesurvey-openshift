@@ -8,5 +8,5 @@ metadata:
 {{ include "nginx.labels.standard" . | indent 4 }}
 data:
   default.conf: |
-{{ .Files.Get "nginx/assets/default.conf" | indent 4 }}
+{{ .Files.Get "assets/default.conf" | indent 4 }}
 ...
