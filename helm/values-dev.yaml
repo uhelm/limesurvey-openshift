@@ -1,9 +1,11 @@
 # Default values for limesurvey Helm chart (dev environment)
 global:
-  licensePlate: cd77be
+  licensePlate: da8021
   sectionTag: -dev
-  host: "deseng-limesurvey-dev.apps.silver.devops.gov.bc.ca"
+  host: "limesurvey-dev.apps.clab.devops.gov.bc.ca"
+  image:
+    tag: dev
 
   vault:
-    engine: cd77be-nonprod
+    engine: da8021-nonprod
     path: "/dev"
