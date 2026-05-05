@@ -12,4 +12,10 @@ spec:
         role: ROLE_TEAM_EDIT
       - name: james.w.payer@gov.bc.ca
         role: ROLE_TEAM_EDIT
+      - name: nat.weiland@gov.bc.ca
+        role: ROLE_TEAM_EDIT
+      - name: freyja.stewart@gov.bc.ca
+        role: ROLE_TEAM_EDIT
+      - name: steve.m.howard@gov.bc.ca
+        role: ROLE_TEAM_EDIT
 ...
