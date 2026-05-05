@@ -38,6 +38,9 @@ jobs:
     uses: ./.github/workflows/helm-cd.yml
     secrets: inherit
     needs: [vars]
+    permissions:
+      contents: read
+      packages: write
     with:
       environment: dev
       tag: ${{ needs.vars.outputs.pr }}
