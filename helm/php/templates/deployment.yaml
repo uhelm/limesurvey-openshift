@@ -71,7 +71,7 @@ spec:
             - name: config-limesurvey-application
               readOnly: true
               mountPath: "/var/www/html/limesurvey/application/config/config.php"
-              subPath: config.php          
+              subPath: config.php
             {{- range $pvc := $pvcs }}
             - mountPath: {{ $pvc.mountPath | quote }}
               name: {{ $pvc.name }}
