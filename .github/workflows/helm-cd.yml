@@ -88,21 +88,21 @@ jobs:
           done
       - name: Set OpenShift project
         run: |
-          oc project ${{ secrets.OC_NAMESPACE }}
+          oc project ${{ secrets.OPENSHIFT_NAMESPACE }}
       - name: Update & Build Helm dependencies
         run: |
           helm dependency update ./helm
           helm dependency build ./helm
       - name: Deploy Helm chart
         run: |
-          helm upgrade --namespace ${{ secrets.OC_NAMESPACE }} --install limesurvey ./helm \
+          helm upgrade --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} --install limesurvey ./helm \
             --values ./helm/values.yaml \
             --values ./helm/values-${{ inputs.environment || github.event.inputs.environment || 'dev' }}.yaml \
             --set-string global.image.tag="${{ steps.vars.outputs.tag }}"
       - name: Verify Deployment
         run: |
-          oc rollout --namespace ${{ secrets.OC_NAMESPACE }} status deployment/limesurvey-nginx --timeout=180s
-          oc rollout --namespace ${{ secrets.OC_NAMESPACE }} status deployment/limesurvey-php --timeout=180s
+          oc rollout --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} status deployment/limesurvey-nginx --timeout=180s
+          oc rollout --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} status deployment/limesurvey-php --timeout=180s
 
   promote-images:
     name: Promote Images

@@ -62,7 +62,7 @@ spec:
         - name: limesurvey-init
           image: "{{ default .Values.global.image.repository .Values.image.repository }}/{{ default .Chart.Name .Values.image.name }}:{{ default .Values.global.image.tag .Values.image.tag }}"
           command: ["/bin/bash"]
-          args: [ "-c", "source /vault/secrets/mssql && limesurvey-init.sh"]
+          args: [ "-c", "source /vault/secrets/mssql && source /vault/secrets/limesurvey && limesurvey-init.sh"]
           volumeMounts:
             - name: config-limesurvey-php
               readOnly: true
@@ -71,7 +71,7 @@ spec:
             - name: config-limesurvey-application
               readOnly: true
               mountPath: "/var/www/html/limesurvey/application/config/config.php"
-              subPath: config.php          
+              subPath: config.php
             {{- range $pvc := $pvcs }}
             - mountPath: {{ $pvc.mountPath | quote }}
               name: {{ $pvc.name }}
